@@ -4,22 +4,39 @@ import { GoogleGenAI, Type } from "@google/genai";
 import NewsMasthead from './components/NewsMasthead';
 import FeedItem from './components/FeedItem';
 import ListingSidebar from './components/ListingSidebar';
-import { 
-  Section1Subscribe, 
-  TrendingAndMostRead, 
-  ExploreSectors, 
-  CompanyCoverageGrid, 
-  PeopleSlider 
+import {
+  Section1Subscribe,
+  TrendingAndMostRead,
+  ExploreSectors,
+  CompanyCoverageGrid,
+  PeopleSlider
 } from './components/HomeSections';
 import { MOCK_ARTICLES, MOCK_COMPANIES, MOCK_PEOPLE, SECTORS } from './constants';
 import { Article } from './types';
 import { Zap, Layers, Building2, UserCircle, Target, TrendingUp, ChevronDown, ChevronUp, ArrowUpRight, Tag as TagIcon, Sparkles } from 'lucide-react';
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+console.log('App.tsx module loading...');
+
+const GEMINI_API_KEY = (typeof process !== 'undefined' && process.env && process.env.API_KEY) ?
+  (process.env.API_KEY.includes('PLACEHOLDER') ? '' : process.env.API_KEY) : '';
+
+// Lazy initialization of AI to prevent top-level crashes
+let aiInstance: any = null;
+const getAI = () => {
+  if (!aiInstance && GEMINI_API_KEY) {
+    try {
+      aiInstance = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+    } catch (e) {
+      console.error('Failed to initialize AI:', e);
+    }
+  }
+  return aiInstance;
+};
 
 type View = 'home' | 'article' | 'sector' | 'company' | 'person';
 
 const App: React.FC = () => {
+  console.log('App component rendering...');
   const [activeView, setActiveView] = useState<View>('home');
   const [activeId, setActiveId] = useState<string | null>(null);
   const [articles, setArticles] = useState<Article[]>(MOCK_ARTICLES);
@@ -58,11 +75,16 @@ const App: React.FC = () => {
   };
 
   const generateNewSignal = async (context?: string) => {
+    const ai = getAI();
+    if (!ai) {
+      console.warn('AI not initialized - missing API key');
+      return;
+    }
     setIsGenerating(true);
     try {
       const prompt = `Generate a high-density supply chain intelligence news story. Topic context: ${context || 'Global Logistics'}. Focus on operational impact. VERY IMPORTANT: The body text MUST be under 60 words total and highly concise. Format as JSON Article.`;
       const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: "gemini-1.5-flash",
         contents: prompt,
         config: {
           responseMimeType: "application/json",
@@ -115,7 +137,7 @@ const App: React.FC = () => {
   const ListingView = ({ type, id }: { type: View, id: string }) => {
     const title = id;
     const typeCaption = type === 'sector' ? 'SECTOR' : type === 'company' ? 'COMPANY' : 'PERSON';
-    
+
     const filtered = articles.filter(a => {
       if (type === 'sector') {
         if (id === 'Logistics' || id === 'Logistics &') return a.sectors.includes('Logistics') || a.sectors.includes('Trade');
@@ -135,7 +157,7 @@ const App: React.FC = () => {
             {title}
           </h1>
         </div>
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
           <div className="lg:col-span-8">
             {filtered.length > 0 ? (
@@ -152,7 +174,7 @@ const App: React.FC = () => {
             )}
           </div>
           <div className="lg:col-span-4 border-l border-gray-100 pl-0 lg:pl-12">
-             <ListingSidebar articles={articles} companies={MOCK_COMPANIES} people={MOCK_PEOPLE} onNavigate={(id) => navigateTo(`/article/${id}`)} onSectorSelect={(s) => navigateTo(`/sector/${encodeURIComponent(s)}`)} onCompanySelect={(c) => navigateTo(`/company/${encodeURIComponent(c)}`)} onPersonSelect={(p) => navigateTo(`/person/${encodeURIComponent(p)}`)} />
+            <ListingSidebar articles={articles} companies={MOCK_COMPANIES} people={MOCK_PEOPLE} onNavigate={(id) => navigateTo(`/article/${id}`)} onSectorSelect={(s) => navigateTo(`/sector/${encodeURIComponent(s)}`)} onCompanySelect={(c) => navigateTo(`/company/${encodeURIComponent(c)}`)} onPersonSelect={(p) => navigateTo(`/person/${encodeURIComponent(p)}`)} />
           </div>
         </div>
       </div>
@@ -163,7 +185,7 @@ const App: React.FC = () => {
     const mainArticle = articles.find(a => a.id === id);
     const scrollStack = articles.filter(a => a.id !== id);
     const fullStack = mainArticle ? [mainArticle, ...scrollStack] : scrollStack;
-    
+
     if (!mainArticle) return <div className="py-20 text-center font-serif italic text-xl text-gray-400">Loading Intelligence...</div>;
 
     const SingleArticleContent: React.FC<{ article: Article, isFirst?: boolean }> = ({ article, isFirst = false }) => {
@@ -196,7 +218,7 @@ const App: React.FC = () => {
               <div className="h-[1px] flex-grow bg-gray-100"></div>
             </div>
           )}
-          
+
           <div className="flex flex-col w-full bg-white md:bg-transparent md:border-0 rounded-2xl md:rounded-none shadow-[0_2px_30px_rgba(0,0,0,0.04)] md:shadow-none p-4 md:p-0 border border-gray-50 md:border-0 mb-4 md:mb-0">
             <div className="space-y-3 md:space-y-8 mb-4">
               <h1 className="text-[26px] md:text-[48px] font-serif font-bold text-gray-900 leading-[1.1] tracking-tight">
@@ -221,9 +243,9 @@ const App: React.FC = () => {
             <div className="mb-3 md:mb-4 mt-1 md:mt-2">
               <div className="bg-gray-50/50 border border-gray-100 p-4 md:p-6 shadow-[0_1px_5px_rgba(0,0,0,0.02)] md:shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
                 <div className="flex items-center gap-2 mb-2">
-                  <img 
-                    src="https://economictimes.indiatimes.com/icons/etfavicon.ico" 
-                    alt="ET" 
+                  <img
+                    src="https://economictimes.indiatimes.com/icons/etfavicon.ico"
+                    alt="ET"
                     className="w-[1rem] md:w-[1.2rem] h-[1rem] md:h-[1.2rem] object-contain flex-shrink-0"
                   />
                   <div className="flex items-center gap-1.5">
@@ -233,7 +255,7 @@ const App: React.FC = () => {
                     <Sparkles size={12} className="text-[#ed1c24]" fill="currentColor" fillOpacity={0.2} />
                   </div>
                 </div>
-                
+
                 <p className="text-[14px] md:text-[19px] leading-tight md:leading-snug font-serif font-bold text-gray-900 tracking-tight">
                   {analysisContent || article.whyItMatters}
                 </p>
@@ -244,8 +266,8 @@ const App: React.FC = () => {
             <div className="mb-6 mt-4">
               <div className="flex flex-nowrap md:flex-wrap gap-1.5 md:gap-2.5 overflow-x-auto no-scrollbar pb-1 md:pb-0">
                 {article.sectors.map(s => (
-                  <button 
-                    key={s} 
+                  <button
+                    key={s}
                     onClick={() => navigateTo(`/sector/${encodeURIComponent(s)}`)}
                     className={tagClassName}
                   >
@@ -253,8 +275,8 @@ const App: React.FC = () => {
                   </button>
                 ))}
                 {article.entities.map(e => (
-                  <button 
-                    key={e.name} 
+                  <button
+                    key={e.name}
                     onClick={() => navigateTo(`/${e.type === 'PERSON' ? 'person' : 'company'}/${encodeURIComponent(e.name)}`)}
                     className={tagClassName}
                   >
@@ -289,15 +311,15 @@ const App: React.FC = () => {
                 <SingleArticleContent key={art.id} article={art} isFirst={idx === 0} />
               ))}
             </div>
-            
+
             <div className="py-12 md:py-24 text-center flex flex-col items-center justify-center bg-transparent">
-               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#ed1c24] mb-4"></div>
-               <p className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">Loading Subsequent Intelligence</p>
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#ed1c24] mb-4"></div>
+              <p className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">Loading Subsequent Intelligence</p>
             </div>
           </div>
 
           <div className="hidden lg:block lg:col-span-4 border-l border-gray-100 pl-12">
-            <ListingSidebar 
+            <ListingSidebar
               articles={articles}
               companies={MOCK_COMPANIES}
               people={MOCK_PEOPLE}
@@ -314,23 +336,23 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col overflow-x-hidden">
-      <NewsMasthead 
+      <NewsMasthead
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         onNavClick={() => navigateTo('/')}
         onNavigate={navigateTo}
       />
       <main className="flex-grow">
-        {activeView === 'home' ? <HomeView /> : 
-         activeView === 'article' ? <ArticleView id={activeId || ''} /> : 
-         <ListingView type={activeView} id={activeId || ''} />}
+        {activeView === 'home' ? <HomeView /> :
+          activeView === 'article' ? <ArticleView id={activeId || ''} /> :
+            <ListingView type={activeView} id={activeId || ''} />}
       </main>
       <footer className="hidden md:block bg-gray-950 text-white py-24 px-8 mt-auto border-t border-gray-900">
         <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-16 text-sm">
           <div className="space-y-6">
-            <img 
-              src="https://st.etb2bimg.com/Themes/Release/theme4/images/logos/supplychain-logo-mobile-header.svg?mod=3129" 
-              alt="ET" 
+            <img
+              src="https://st.etb2bimg.com/Themes/Release/theme4/images/logos/supplychain-logo-mobile-header.svg?mod=3129"
+              alt="ET"
               className="w-56 h-auto invert brightness-0 opacity-90"
             />
             <p className="text-gray-400 pt-4 leading-relaxed font-medium text-base">Global benchmark for operational risk and high-density supply chain intelligence.</p>
@@ -353,9 +375,9 @@ const App: React.FC = () => {
             </ul>
           </div>
           <div className="space-y-6">
-             <h4 className="text-[11px] font-bold uppercase tracking-widest text-gray-500">EDITORIAL CONTACT</h4>
-             <p className="text-gray-400 font-medium text-base">Newsroom: editorial@etsupplychain.com</p>
-             <p className="text-gray-400 font-medium text-base">Terminal: pro@etsupplychain.com</p>
+            <h4 className="text-[11px] font-bold uppercase tracking-widest text-gray-500">EDITORIAL CONTACT</h4>
+            <p className="text-gray-400 font-medium text-base">Newsroom: editorial@etsupplychain.com</p>
+            <p className="text-gray-400 font-medium text-base">Terminal: pro@etsupplychain.com</p>
           </div>
         </div>
       </footer>
