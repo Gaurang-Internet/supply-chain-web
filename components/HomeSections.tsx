@@ -19,7 +19,7 @@ import {
 import { MOCK_SUBSCRIBERS } from '../constants';
 
 export const Section1Subscribe: React.FC = () => (
-  <section className="pt-10 pb-20 relative overflow-hidden border-b border-gray-100">
+  <section className="pt-5 md:pt-10 pb-20 relative overflow-hidden border-b border-gray-100">
     <div className="max-w-5xl relative z-10">
       <h1 className="text-5xl md:text-[4.5rem] font-serif font-bold tracking-tighter text-gray-900 mb-8 leading-tight">
         <span className="text-blue-700">Driving the Future of Global Supply Chains</span>
