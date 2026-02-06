@@ -1,48 +1,30 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { GoogleGenAI, Type } from "@google/genai";
 import NewsMasthead from './components/NewsMasthead';
 import FeedItem from './components/FeedItem';
 import ListingSidebar from './components/ListingSidebar';
-import {
-  Section1Subscribe,
-  TrendingAndMostRead,
-  ExploreSectors,
-  CompanyCoverageGrid,
-  PeopleSlider
+import { 
+  Section1Subscribe, 
+  TrendingAndMostRead, 
+  ExploreSectors, 
+  CompanyCoverageGrid, 
+  PeopleSlider 
 } from './components/HomeSections';
 import { MOCK_ARTICLES, MOCK_COMPANIES, MOCK_PEOPLE, SECTORS } from './constants';
 import { Article } from './types';
-import { Zap, Layers, Building2, UserCircle, Target, TrendingUp, ChevronDown, ChevronUp, ArrowUpRight, Tag as TagIcon, Sparkles, Clock } from 'lucide-react';
-console.log('App.tsx module loading...');
+import { Zap, Layers, Building2, UserCircle, Target, TrendingUp, ChevronDown, ChevronUp, ArrowUpRight, Tag as TagIcon, Sparkles } from 'lucide-react';
 
-const GEMINI_API_KEY = (typeof process !== 'undefined' && process.env && process.env.API_KEY) ?
-  (process.env.API_KEY.includes('PLACEHOLDER') ? '' : process.env.API_KEY) : '';
-
-// Lazy initialization of AI to prevent top-level crashes
-let aiInstance: any = null;
-const getAI = () => {
-  if (!aiInstance && GEMINI_API_KEY) {
-    try {
-      aiInstance = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
-    } catch (e) {
-      console.error('Failed to initialize AI:', e);
-    }
-  }
-  return aiInstance;
-};
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 type View = 'home' | 'article' | 'sector' | 'company' | 'person';
 
 const App: React.FC = () => {
-  console.log('App component rendering...');
   const [activeView, setActiveView] = useState<View>('home');
   const [activeId, setActiveId] = useState<string | null>(null);
   const [articles, setArticles] = useState<Article[]>(MOCK_ARTICLES);
   const [isGenerating, setIsGenerating] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-
-  const snapContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleHashSync = () => {
@@ -76,16 +58,11 @@ const App: React.FC = () => {
   };
 
   const generateNewSignal = async (context?: string) => {
-    const ai = getAI();
-    if (!ai) {
-      console.warn('AI not initialized - missing API key');
-      return;
-    }
     setIsGenerating(true);
     try {
       const prompt = `Generate a high-density supply chain intelligence news story. Topic context: ${context || 'Global Logistics'}. Focus on operational impact. VERY IMPORTANT: The body text MUST be under 60 words total and highly concise. Format as JSON Article.`;
       const response = await ai.models.generateContent({
-        model: "gemini-1.5-flash",
+        model: "gemini-3-flash-preview",
         contents: prompt,
         config: {
           responseMimeType: "application/json",
@@ -138,7 +115,7 @@ const App: React.FC = () => {
   const ListingView = ({ type, id }: { type: View, id: string }) => {
     const title = id;
     const typeCaption = type === 'sector' ? 'SECTOR' : type === 'company' ? 'COMPANY' : 'PERSON';
-
+    
     const filtered = articles.filter(a => {
       if (type === 'sector') {
         if (id === 'Logistics' || id === 'Logistics &') return a.sectors.includes('Logistics') || a.sectors.includes('Trade');
@@ -158,7 +135,7 @@ const App: React.FC = () => {
             {title}
           </h1>
         </div>
-
+        
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
           <div className="lg:col-span-8">
             {filtered.length > 0 ? (
@@ -175,7 +152,7 @@ const App: React.FC = () => {
             )}
           </div>
           <div className="lg:col-span-4 border-l border-gray-100 pl-0 lg:pl-12">
-            <ListingSidebar articles={articles} companies={MOCK_COMPANIES} people={MOCK_PEOPLE} onNavigate={(id) => navigateTo(`/article/${id}`)} onSectorSelect={(s) => navigateTo(`/sector/${encodeURIComponent(s)}`)} onCompanySelect={(c) => navigateTo(`/company/${encodeURIComponent(c)}`)} onPersonSelect={(p) => navigateTo(`/person/${encodeURIComponent(p)}`)} />
+             <ListingSidebar articles={articles} companies={MOCK_COMPANIES} people={MOCK_PEOPLE} onNavigate={(id) => navigateTo(`/article/${id}`)} onSectorSelect={(s) => navigateTo(`/sector/${encodeURIComponent(s)}`)} onCompanySelect={(c) => navigateTo(`/company/${encodeURIComponent(c)}`)} onPersonSelect={(p) => navigateTo(`/person/${encodeURIComponent(p)}`)} />
           </div>
         </div>
       </div>
@@ -186,7 +163,7 @@ const App: React.FC = () => {
     const mainArticle = articles.find(a => a.id === id);
     const scrollStack = articles.filter(a => a.id !== id);
     const fullStack = mainArticle ? [mainArticle, ...scrollStack] : scrollStack;
-
+    
     if (!mainArticle) return <div className="py-20 text-center font-serif italic text-xl text-gray-400">Loading Intelligence...</div>;
 
     const SingleArticleContent: React.FC<{ article: Article, isFirst?: boolean }> = ({ article, isFirst = false }) => {
@@ -207,92 +184,95 @@ const App: React.FC = () => {
         article.analysisAudience
       ].filter(Boolean).join(' ');
 
+      // Unified tag styling variable
+      const tagClassName = "shrink-0 px-3 py-1.5 md:px-4 md:py-2 bg-gray-100 text-gray-900 border border-gray-200 text-[9px] md:text-[11px] font-black uppercase tracking-[0.1em] md:tracking-[0.15em] rounded-full hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all shadow-sm active:scale-95";
+
       return (
-        <div className={`w-full mobile-snap-section px-4 pt-2 pb-0 md:px-0 md:pt-0 ${!isFirst ? 'md:mt-0' : ''}`}>
-          {/* Desktop Separator */}
+        <div className="w-full">
           {!isFirst && (
-            <div className="hidden md:flex items-center gap-4 py-16">
+            <div className="hidden md:flex items-center gap-4 md:py-16">
               <div className="h-[1px] flex-grow bg-gray-100"></div>
               <span className="text-[11px] font-black uppercase tracking-[0.3em] text-gray-300">NEXT</span>
               <div className="h-[1px] flex-grow bg-gray-100"></div>
             </div>
           )}
+          
+          <div className="flex flex-col w-full bg-white md:bg-transparent md:border-0 rounded-2xl md:rounded-none shadow-[0_2px_30px_rgba(0,0,0,0.04)] md:shadow-none p-4 md:p-0 border border-gray-50 md:border-0 mb-4 md:mb-0">
+            <div className="space-y-3 md:space-y-8 mb-4">
+              <h1 className="text-[26px] md:text-[48px] font-serif font-bold text-gray-900 leading-[1.1] tracking-tight">
+                {article.headline}
+              </h1>
 
-          <div className="flex flex-col w-full h-full md:h-auto bg-white md:bg-transparent rounded-2xl md:rounded-none shadow-[0_4px_30px_rgba(0,0,0,0.06)] md:shadow-none border border-gray-100 md:border-0 overflow-hidden">
-            {/* Scrollable Story Content Area */}
-            <div className="flex-grow overflow-y-auto p-4 md:p-0 no-scrollbar">
-              <div className="flex flex-col min-h-full">
-                <div className="flex-grow space-y-2 md:space-y-8">
-                  <h1 className="text-[18px] md:text-[48px] font-serif font-bold text-gray-900 leading-[1.2] md:leading-[1.1] tracking-tight">
-                    {article.headline}
-                  </h1>
+              {article.imageUrl && (
+                <div className="aspect-video md:aspect-[21/9] w-full overflow-hidden bg-gray-50 border border-gray-100 rounded-sm shadow-sm">
+                  <img src={article.imageUrl} alt="" className="w-full h-full object-cover" />
+                </div>
+              )}
 
-                  {article.imageUrl && (
-                    <div className="aspect-video md:aspect-[21/9] w-full overflow-hidden bg-gray-50 border border-gray-100 rounded-sm shadow-sm">
-                      <img src={article.imageUrl} alt="" className="w-full h-full object-cover" />
-                    </div>
-                  )}
+              <div className="prose prose-sm md:prose-lg lg:prose-xl max-w-none text-gray-800 font-serif">
+                {article.body.split('\n\n').map((p, i) => (
+                  <p key={i} className="text-[16px] md:text-[22px] leading-snug md:leading-relaxed mb-2 md:mb-4">
+                    {p}
+                  </p>
+                ))}
+              </div>
+            </div>
 
-                  <div className="prose prose-sm md:prose-lg lg:prose-xl max-w-none text-gray-800 font-serif">
-                    {article.body.split('\n\n').map((p, i) => (
-                      <p key={i} className="text-[14px] md:text-[22px] leading-snug md:leading-relaxed mb-2 md:mb-4">
-                        {p}
-                      </p>
-                    ))}
-                  </div>
-
-                  {/* ET Analysis Dedicated Widget */}
-                  <div className="mt-1 md:mt-4">
-                    <div className="bg-gray-50/50 border border-gray-100 p-3 md:p-6 shadow-[0_1px_5px_rgba(0,0,0,0.02)] md:shadow-[0_2px_10px_rgba(0,0,0,0.03)] rounded-sm">
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <img
-                          src="https://economictimes.indiatimes.com/icons/etfavicon.ico"
-                          alt="ET"
-                          className="w-[1rem] md:w-[1.2rem] h-[1rem] md:h-[1.2rem] object-contain flex-shrink-0"
-                        />
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[9px] md:text-[12px] font-black uppercase tracking-[0.15em] md:tracking-[0.2em] text-[#ed1c24] leading-none">
-                            ANALYSIS
-                          </span>
-                          <Sparkles size={11} className="text-[#ed1c24]" fill="currentColor" fillOpacity={0.2} />
-                        </div>
-                      </div>
-
-                      <p className="text-[13px] md:text-[19px] leading-tight md:leading-snug font-serif font-bold text-gray-900 tracking-tight">
-                        {analysisContent || article.whyItMatters}
-                      </p>
-                    </div>
+            <div className="mb-3 md:mb-4 mt-1 md:mt-2">
+              <div className="bg-gray-50/50 border border-gray-100 p-4 md:p-6 shadow-[0_1px_5px_rgba(0,0,0,0.02)] md:shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+                <div className="flex items-center gap-2 mb-2">
+                  <img 
+                    src="https://economictimes.indiatimes.com/icons/etfavicon.ico" 
+                    alt="ET" 
+                    className="w-[1rem] md:w-[1.2rem] h-[1rem] md:h-[1.2rem] object-contain flex-shrink-0"
+                  />
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] md:text-[12px] font-black uppercase tracking-[0.15em] md:tracking-[0.2em] text-[#ed1c24] leading-none">
+                      ANALYSIS
+                    </span>
+                    <Sparkles size={12} className="text-[#ed1c24]" fill="currentColor" fillOpacity={0.2} />
                   </div>
                 </div>
+                
+                <p className="text-[14px] md:text-[19px] leading-tight md:leading-snug font-serif font-bold text-gray-900 tracking-tight">
+                  {analysisContent || article.whyItMatters}
+                </p>
+              </div>
+            </div>
 
-                {/* Source and Time Section - Aligned to bottom of card via mt-auto & flex-grow above */}
-                <div className="mt-auto py-2 md:py-4 flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 group cursor-pointer hover:text-blue-700 transition-colors text-[9px] md:text-[12px] font-black uppercase tracking-[0.15em] md:tracking-[0.2em] text-gray-400">
-                    <span className="text-gray-500">SOURCE:</span>
-                    <span className="text-gray-900 border-b border-transparent group-hover:border-blue-700">{article.source}</span>
-                    <ArrowUpRight size={10} className="md:size-[12px] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-                  </div>
+            {/* Headless Tags Section - Unified color pattern */}
+            <div className="mb-6 mt-4">
+              <div className="flex flex-nowrap md:flex-wrap gap-1.5 md:gap-2.5 overflow-x-auto no-scrollbar pb-1 md:pb-0">
+                {article.sectors.map(s => (
+                  <button 
+                    key={s} 
+                    onClick={() => navigateTo(`/sector/${encodeURIComponent(s)}`)}
+                    className={tagClassName}
+                  >
+                    {s}
+                  </button>
+                ))}
+                {article.entities.map(e => (
+                  <button 
+                    key={e.name} 
+                    onClick={() => navigateTo(`/${e.type === 'PERSON' ? 'person' : 'company'}/${encodeURIComponent(e.name)}`)}
+                    className={tagClassName}
+                  >
+                    {e.name}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-                  <div className="flex items-center gap-1.5 text-[9px] md:text-[12px] font-black uppercase tracking-[0.15em] md:tracking-[0.2em] text-gray-400">
-                    <Clock size={10} className="md:size-[12px]" />
-                    <span className="text-gray-900">{getDisplayDay(article.timestamp)}</span>
-                  </div>
-                </div>
+            <div className="py-2.5 md:p-[0.75rem] border-t border-gray-100 flex items-center justify-between">
+              <div className="flex items-center gap-1.5 group cursor-pointer hover:text-blue-700 transition-colors text-[9px] md:text-[12px] font-black uppercase tracking-[0.15em] md:tracking-[0.2em] text-gray-400">
+                <span className="text-gray-500">SOURCE:</span>
+                <span className="text-gray-900 border-b-2 border-transparent group-hover:border-blue-700">{article.source}</span>
+                <ArrowUpRight size={12} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+              </div>
 
-                {/* Desktop Tags (Hidden on Mobile) */}
-                <div className="hidden md:block mt-6">
-                  <div className="flex flex-wrap gap-2.5">
-                    {article.sectors.map(s => (
-                      <button
-                        key={s}
-                        onClick={() => navigateTo(`/sector/${encodeURIComponent(s)}`)}
-                        className="px-4 py-2 bg-gray-100 text-gray-900 border border-gray-200 text-[11px] font-black uppercase tracking-[0.15em] rounded-full hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all shadow-sm active:scale-95"
-                      >
-                        {s}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+              <div className="text-[9px] md:text-[12px] font-black uppercase tracking-[0.15em] md:tracking-[0.2em] text-gray-400">
+                <span className="text-gray-900">{getDisplayDay(article.timestamp)}</span>
               </div>
             </div>
           </div>
@@ -301,26 +281,23 @@ const App: React.FC = () => {
     };
 
     return (
-      <div className="max-w-[1400px] mx-auto md:px-8 md:pt-6">
+      <div className="animate-in fade-in duration-700 max-w-[1400px] mx-auto px-4 md:px-8 pt-4 md:pt-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
-          {/* Main Content Column - Snap Container on Mobile */}
-          <div ref={snapContainerRef} className="lg:col-span-8 mobile-snap-container md:block">
-            <div className="flex flex-col w-full h-full md:h-auto">
+          <div className="lg:col-span-8">
+            <div className="flex flex-col w-full">
               {fullStack.map((art, idx) => (
                 <SingleArticleContent key={art.id} article={art} isFirst={idx === 0} />
               ))}
             </div>
-
-            {/* End of Feed Placeholder - Only visible after snapping through list */}
-            <div className="hidden md:flex py-24 text-center border-t border-gray-50 flex-col items-center justify-center bg-transparent">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#ed1c24] mb-4"></div>
-              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">Loading Subsequent Intelligence</p>
+            
+            <div className="py-12 md:py-24 text-center flex flex-col items-center justify-center bg-transparent">
+               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#ed1c24] mb-4"></div>
+               <p className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">Loading Subsequent Intelligence</p>
             </div>
           </div>
 
-          {/* Sidebar Column */}
           <div className="hidden lg:block lg:col-span-4 border-l border-gray-100 pl-12">
-            <ListingSidebar
+            <ListingSidebar 
               articles={articles}
               companies={MOCK_COMPANIES}
               people={MOCK_PEOPLE}
@@ -337,24 +314,23 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col overflow-x-hidden">
-      <NewsMasthead
+      <NewsMasthead 
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         onNavClick={() => navigateTo('/')}
         onNavigate={navigateTo}
       />
-      {/* Reduced mobile margin to mt-[44px] for the compact header target */}
-      <main className="flex-grow mt-[44px] md:mt-[112px]">
-        {activeView === 'home' ? <HomeView /> :
-          activeView === 'article' ? <ArticleView id={activeId || ''} /> :
-            <ListingView type={activeView} id={activeId || ''} />}
+      <main className="flex-grow">
+        {activeView === 'home' ? <HomeView /> : 
+         activeView === 'article' ? <ArticleView id={activeId || ''} /> : 
+         <ListingView type={activeView} id={activeId || ''} />}
       </main>
       <footer className="hidden md:block bg-gray-950 text-white py-24 px-8 mt-auto border-t border-gray-900">
         <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-16 text-sm">
           <div className="space-y-6">
-            <img
-              src="https://st.etb2bimg.com/Themes/Release/theme4/images/logos/supplychain-logo-mobile-header.svg?mod=3129"
-              alt="ET"
+            <img 
+              src="https://st.etb2bimg.com/Themes/Release/theme4/images/logos/supplychain-logo-mobile-header.svg?mod=3129" 
+              alt="ET" 
               className="w-56 h-auto invert brightness-0 opacity-90"
             />
             <p className="text-gray-400 pt-4 leading-relaxed font-medium text-base">Global benchmark for operational risk and high-density supply chain intelligence.</p>
@@ -377,9 +353,9 @@ const App: React.FC = () => {
             </ul>
           </div>
           <div className="space-y-6">
-            <h4 className="text-[11px] font-bold uppercase tracking-widest text-gray-500">EDITORIAL CONTACT</h4>
-            <p className="text-gray-400 font-medium text-base">Newsroom: editorial@etsupplychain.com</p>
-            <p className="text-gray-400 font-medium text-base">Terminal: pro@etsupplychain.com</p>
+             <h4 className="text-[11px] font-bold uppercase tracking-widest text-gray-500">EDITORIAL CONTACT</h4>
+             <p className="text-gray-400 font-medium text-base">Newsroom: editorial@etsupplychain.com</p>
+             <p className="text-gray-400 font-medium text-base">Terminal: pro@etsupplychain.com</p>
           </div>
         </div>
       </footer>
