@@ -1,7 +1,8 @@
-
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
+
+console.log('index.tsx entry point loading...');
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
