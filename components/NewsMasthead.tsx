@@ -44,9 +44,9 @@ const NewsMasthead: React.FC<NewsMastheadProps> = ({ searchQuery, onSearchChange
           <div className="flex items-center justify-between gap-8">
             {/* ETSupplyChain SVG Logo */}
             <button onClick={onNavClick} className="block transition-transform active:scale-95 shrink-0">
-              <img 
-                src="https://st.etb2bimg.com/Themes/Release/theme4/images/logos/supplychain-logo-mobile-header.svg?mod=3129" 
-                alt="ETSupplyChain" 
+              <img
+                src="https://st.etb2bimg.com/Themes/Release/theme4/images/logos/supplychain-logo-mobile-header.svg?mod=3129"
+                alt="ETSupplyChain"
                 className="w-[180px] md:w-[240px] h-auto object-contain"
               />
             </button>
@@ -54,8 +54,8 @@ const NewsMasthead: React.FC<NewsMastheadProps> = ({ searchQuery, onSearchChange
             {/* Desktop Nav & Search */}
             <div className="hidden md:flex items-center gap-10 flex-grow justify-end">
               <nav className="flex items-center gap-6 text-[11px] font-black uppercase tracking-[0.2em] text-gray-500">
-                <button 
-                  onClick={onNavClick} 
+                <button
+                  onClick={onNavClick}
                   className="hover:text-blue-700 transition-colors p-1"
                   aria-label="Home"
                 >
@@ -63,7 +63,7 @@ const NewsMasthead: React.FC<NewsMastheadProps> = ({ searchQuery, onSearchChange
                 </button>
 
                 {visibleItems.map(item => (
-                  <button 
+                  <button
                     key={item.id}
                     onClick={() => onNavigate(`/sector/${encodeURIComponent(item.id)}`)}
                     className="hover:text-blue-700 transition-colors py-1 border-b-2 border-transparent hover:border-blue-700"
@@ -73,7 +73,7 @@ const NewsMasthead: React.FC<NewsMastheadProps> = ({ searchQuery, onSearchChange
                 ))}
 
                 {/* More Dropdown */}
-                <div 
+                <div
                   className="relative group"
                   onMouseEnter={() => setIsMoreOpen(true)}
                   onMouseLeave={() => setIsMoreOpen(false)}
@@ -81,7 +81,7 @@ const NewsMasthead: React.FC<NewsMastheadProps> = ({ searchQuery, onSearchChange
                   <button className="flex items-center gap-1 hover:text-blue-700 transition-colors py-1">
                     MORE <ChevronDown size={14} className={`transition-transform duration-200 ${isMoreOpen ? 'rotate-180' : ''}`} />
                   </button>
-                  
+
                   {isMoreOpen && (
                     <div className="absolute top-full right-0 mt-0 w-56 bg-white border border-gray-100 shadow-xl py-4 animate-in fade-in slide-in-from-top-2 duration-200">
                       {moreItems.map(item => (
@@ -105,11 +105,11 @@ const NewsMasthead: React.FC<NewsMastheadProps> = ({ searchQuery, onSearchChange
 
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={searchQuery}
                   onChange={(e) => onSearchChange(e.target.value)}
-                  placeholder="Intelligence search..." 
+                  placeholder="Search"
                   className="pl-9 pr-4 py-2 bg-gray-50 border-transparent focus:border-blue-200 focus:bg-white border text-[10px] w-48 outline-none transition-all rounded-sm uppercase font-bold tracking-widest shadow-inner"
                 />
               </div>
@@ -117,8 +117,8 @@ const NewsMasthead: React.FC<NewsMastheadProps> = ({ searchQuery, onSearchChange
 
             {/* Mobile Menu Trigger */}
             <div className="md:hidden flex items-center">
-              <button 
-                onClick={() => setIsMenuOpen(!isMenuOpen)} 
+              <button
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
                 className="p-2 -mr-2 text-gray-900 focus:outline-none"
                 aria-label="Toggle menu"
               >
@@ -136,9 +136,9 @@ const NewsMasthead: React.FC<NewsMastheadProps> = ({ searchQuery, onSearchChange
                 <Home size={18} /> HOME
               </button>
               {categories.map(cat => (
-                <button 
-                  key={cat.id} 
-                  onClick={() => { onNavigate(`/sector/${encodeURIComponent(cat.id)}`); setIsMenuOpen(false); }} 
+                <button
+                  key={cat.id}
+                  onClick={() => { onNavigate(`/sector/${encodeURIComponent(cat.id)}`); setIsMenuOpen(false); }}
                   className="text-left py-4 border-b border-gray-50 px-2"
                 >
                   {cat.label}
@@ -146,14 +146,14 @@ const NewsMasthead: React.FC<NewsMastheadProps> = ({ searchQuery, onSearchChange
               ))}
               <button onClick={() => { onNavigate('/company/All'); setIsMenuOpen(false); }} className="text-left py-4 border-b border-gray-50 px-2">COMPANIES</button>
               <button className="text-left py-4 text-blue-700 px-2">PRO INTELLIGENCE</button>
-              
+
               <div className="relative mt-6 px-2">
                 <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={searchQuery}
                   onChange={(e) => onSearchChange(e.target.value)}
-                  placeholder="Search intelligence..." 
+                  placeholder="Search"
                   className="w-full pl-11 pr-4 py-4 bg-gray-100 border-none text-xs outline-none rounded-sm"
                 />
               </div>
